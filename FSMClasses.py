@@ -6,9 +6,11 @@ class FSMUser(StatesGroup):
     input_quantity = State()
     get_rub_payment = State()
     get_reqs = State()
-    get_crypto_address = State()
     is_correct = State()
     is_paid = State()
+    get_photo = State()
+    calculator = State()
+    get_amount = State()
 
 
 class FSMAdmin(StatesGroup):
@@ -18,3 +20,9 @@ class FSMAdmin(StatesGroup):
 
 class FSMReply(StatesGroup):
     pass
+
+
+class FSMModeratorReply(StatesGroup):
+    request_id = State()
+    choice = State()
+    blockchain = State()

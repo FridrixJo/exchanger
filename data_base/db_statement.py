@@ -65,20 +65,6 @@ class StatementDB:
         except Exception as e:
             print(e, "get_xmr")
 
-    def set_sber(self, sber, id=1):
-        try:
-            self.sql.execute("UPDATE `statement` SET sber = ? WHERE id = ?", (sber, id))
-        except Exception as e:
-            print(e, "set_sber")
-        return self.db.commit()
-
-    def get_sber(self, id=1):
-        try:
-            result = self.sql.execute("SELECT sber FROM statement WHERE id = ?", (id,))
-            return result.fetchall()[0][0]
-        except Exception as e:
-            print(e, "get_sber")
-
     def set_tinkoff(self, tinkoff, id=1):
         try:
             self.sql.execute("UPDATE `statement` SET tinkoff = ? WHERE id = ?", (tinkoff, id))
@@ -92,3 +78,87 @@ class StatementDB:
             return result.fetchall()[0][0]
         except Exception as e:
             print(e, "get_tinkoff")
+
+    def set_open_bank(self, open_bank, id=1):
+        try:
+            self.sql.execute("UPDATE `statement` SET open_bank = ? WHERE id = ?", (open_bank, id))
+        except Exception as e:
+            print(e, "set_open_bank")
+        return self.db.commit()
+
+    def get_open_bank(self, id=1):
+        try:
+            result = self.sql.execute("SELECT open_bank FROM statement WHERE id = ?", (id,))
+            return result.fetchall()[0][0]
+        except Exception as e:
+            print(e, "get_open_bank")
+
+    def set_qiwi(self, qiwi, id=1):
+        try:
+            self.sql.execute("UPDATE `statement` SET qiwi = ? WHERE id = ?", (qiwi, id))
+        except Exception as e:
+            print(e, "set_qiwi")
+        return self.db.commit()
+
+    def get_qiwi(self, id=1):
+        try:
+            result = self.sql.execute("SELECT qiwi FROM statement WHERE id = ?", (id,))
+            return result.fetchall()[0][0]
+        except Exception as e:
+            print(e, "get_qiwi")
+
+    def set_btc_address(self, btc_address, id=1):
+        try:
+            self.sql.execute("UPDATE `statement` SET btc_address = ? WHERE id = ?", (btc_address, id))
+        except Exception as e:
+            print(e, "set_btc_address")
+        return self.db.commit()
+
+    def get_btc_address(self, id=1):
+        try:
+            result = self.sql.execute("SELECT btc_address FROM statement WHERE id = ?", (id,))
+            return result.fetchall()[0][0]
+        except Exception as e:
+            print(e, "get_btc_address")
+
+    def set_eth_address(self, eth_address, id=1):
+        try:
+            self.sql.execute("UPDATE `statement` SET eth_address = ? WHERE id = ?", (eth_address, id))
+        except Exception as e:
+            print(e, "set_eth_address")
+        return self.db.commit()
+
+    def get_eth_address(self, id=1):
+        try:
+            result = self.sql.execute("SELECT eth_address FROM statement WHERE id = ?", (id,))
+            return result.fetchall()[0][0]
+        except Exception as e:
+            print(e, "get_eth_address")
+
+    def set_ltc_address(self, ltc_address, id=1):
+        try:
+            self.sql.execute("UPDATE `statement` SET ltc_address = ? WHERE id = ?", (ltc_address, id))
+        except Exception as e:
+            print(e, "set_ltc_address")
+        return self.db.commit()
+
+    def get_ltc_address(self, id=1):
+        try:
+            result = self.sql.execute("SELECT ltc_address FROM statement WHERE id = ?", (id,))
+            return result.fetchall()[0][0]
+        except Exception as e:
+            print(e, "get_ltc_address")
+
+    def set_xmr_address(self, xmr_address, id=1):
+        try:
+            self.sql.execute("UPDATE `statement` SET xmr_address = ? WHERE id = ?", (xmr_address, id))
+        except Exception as e:
+            print(e, "set_xmr_address")
+        return self.db.commit()
+
+    def get_xmr_address(self, id=1):
+        try:
+            result = self.sql.execute("SELECT xmr_address FROM statement WHERE id = ?", (id,))
+            return result.fetchall()[0][0]
+        except Exception as e:
+            print(e, "get_xmr_address")
