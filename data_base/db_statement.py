@@ -162,3 +162,31 @@ class StatementDB:
             return result.fetchall()[0][0]
         except Exception as e:
             print(e, "get_xmr_address")
+
+    def set_about(self, about, id=1):
+        try:
+            self.sql.execute("UPDATE `statement` SET about = ? WHERE id = ?", (about, id))
+        except Exception as e:
+            print(e, "set_about")
+        return self.db.commit()
+
+    def get_about(self, id=1):
+        try:
+            result = self.sql.execute("SELECT about FROM statement WHERE id = ?", (id,))
+            return result.fetchall()[0][0]
+        except Exception as e:
+            print(e, "get_about")
+
+    def set_how(self, how, id=1):
+        try:
+            self.sql.execute("UPDATE `statement` SET how = ? WHERE id = ?", (how, id))
+        except Exception as e:
+            print(e, "set_how")
+        return self.db.commit()
+
+    def get_how(self, id=1):
+        try:
+            result = self.sql.execute("SELECT how FROM statement WHERE id = ?", (id,))
+            return result.fetchall()[0][0]
+        except Exception as e:
+            print(e, "get_how")

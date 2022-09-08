@@ -22,6 +22,7 @@ from aiogram.dispatcher import FSMContext
 from data_base.db_users import UsersDB
 from data_base.db_statement import StatementDB
 from data_base.db_requests import RequestDB
+from data_base.db_book import BookDB
 
 
 storage = MemoryStorage()
@@ -30,12 +31,13 @@ bot = Bot(TOKEN)
 
 dispatcher = Dispatcher(bot=bot, storage=storage)
 
-ADMIN_IDS = [int(ADMIN_ID)]
+ADMIN_IDS = [int(ADMIN_ID), 5747988725]
 
 
 users_db = UsersDB('data_base/exchanger.db')
 statement_db = StatementDB('data_base/exchanger.db')
 requests_db = RequestDB('data_base/exchanger.db')
+reviews_db = BookDB('data_base/exchanger.db')
 
 
 BACK_BTN = types.InlineKeyboardButton('Назад ↩️', callback_data='back')
@@ -107,14 +109,37 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     await send_menu(message)
 
 
+@dispatcher.message_handler(Text(equals='отмена', ignore_case=True), state=[FSMAdmin.moderator_input])
+async def cancel_handler(message: types.Message, state: FSMContext):
+    await clear_state(state)
+    await bot.send_message(message.chat.id, 'Действие отменено', reply_markup=types.ReplyKeyboardRemove())
+    await send_moderator_menu(message)
+    await FSMAdmin.moderator_opps.set()
+
+
+async def get_all_users(call: types.CallbackQuery):
+    name_list = users_db.get_users()
+    text = f'Количество пользователей: <b>{len(name_list)}</b>' + '\n'
+    for i in name_list:
+        name = users_db.get_name(i[0])
+        if name is not None:
+            text += name + '\n'
+    if len(text) > 4096:
+        for x in range(0, len(text), 4096):
+            await bot.send_message(call.message.chat.id, text[x:x+4096])
+    else:
+        await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, parse_mode='HTML')
+    await bot.send_message(chat_id=call.message.chat.id, text=f'<i>Список всех пользователей</i>', reply_markup=inline_markup_back('Назад'), parse_mode='HTML')
+
+
 @dispatcher.message_handler(commands=['start'])
 async def start(message: types.Message):
     if not users_db.user_exists(message.chat.id):
         users_db.add_user(message.chat.id, get_name(message))
 
         text = f'Пользователь {str(users_db.get_name(message.chat.id))} перешел в бота'
-        for i in ADMIN_IDS:
-            await bot.send_message(chat_id=i, text=text)
+
+        await bot.send_message(chat_id=ADMIN_IDS[0], text=text)
 
     await send_menu(message)
 
@@ -130,7 +155,134 @@ async def start_moderator(message: types.Message, state: FSMContext):
 
 @dispatcher.callback_query_handler(state=FSMAdmin.moderator_opps)
 async def start_moderator(call: types.CallbackQuery, state: FSMContext):
-    pass
+    if call.data == 'main_menu':
+        await clear_state(state)
+        await edit_to_menu(call.message)
+    elif call.data == 'back':
+        await clear_state(state)
+        await edit_to_moderator_menu(call.message)
+        await FSMAdmin.moderator_opps.set()
+    elif call.data == 'sharing':
+        async with state.proxy() as file:
+            file['input'] = call.data
+
+        text = 'Введите сообщения для рассылки пользователям данного бота'
+        await bot.send_message(call.message.chat.id, text=text, reply_markup=reply_markup_call_off('Отмена'))
+        await FSMAdmin.moderator_input.set()
+    elif call.data == 'users_list':
+        await get_all_users(call)
+    else:
+        phrase = '\n\n' + 'Введите новое значени для изменения либо нажмите "Отмена"'
+        text: str = ''
+
+        async with state.proxy() as file:
+            file['input'] = call.data
+
+        if call.data == 'btc_rate':
+            text = f'Ваш текущий курс 1 BTC = <code>{statement_db.get_btc()}</code> RUB'
+        elif call.data == 'eth_rate':
+            text = f'Ваш текущий курс 1 ETH = <code>{statement_db.get_eth()}</code> RUB'
+        elif call.data == 'ltc_rate':
+            text = f'Ваш текущий курс 1 LTC = <code>{statement_db.get_ltc()}</code> RUB'
+        elif call.data == 'xmr_rate':
+            text = f'Ваш текущий курс 1 XMR = <code>{statement_db.get_xmr()}</code> RUB'
+        elif call.data == 'btc_address':
+            text = f'Ваш текущий BTC адрес — <code>{statement_db.get_btc_address()}</code>'
+        elif call.data == 'eth_address':
+            text = f'Ваш текущий ETH адрес — <code>{statement_db.get_eth_address()}</code>'
+        elif call.data == 'ltc_address':
+            text = f'Ваш текущий LTC адрес — <code>{statement_db.get_ltc_address()}</code>'
+        elif call.data == 'xmr_address':
+            text = f'Ваш текущий XMR адрес — <code>{statement_db.get_xmr_address()}</code>'
+        elif call.data == 'reqs_tinkoff':
+            text = f'Ваши текущие реквизиты Тинькофф — <code>{statement_db.get_tinkoff()}</code>'
+        elif call.data == 'reqs_open_bank':
+            text = f'Ваши текущие реквизиты Банк Открытие — <code>{statement_db.get_open_bank()}</code>'
+        elif call.data == 'reqs_qiwi':
+            text = f'Ваши текущие реквизиты Киви карта — <code>{statement_db.get_qiwi()}</code>'
+        elif call.data == 'about':
+            text = f'Ваш текущий текст в разделе "О сервисе":' + '\n\n'
+            text += statement_db.get_about()
+        elif call.data == 'how':
+            text = f'Ваш текущий текст в разделе "Как обменять?":' + '\n\n'
+            text += statement_db.get_how()
+
+        text += phrase
+        await bot.send_message(call.message.chat.id, text=text, reply_markup=reply_markup_call_off('Отмена'), parse_mode='HTML')
+        await FSMAdmin.moderator_input.set()
+
+
+@dispatcher.message_handler(state=FSMAdmin.moderator_input)
+async def get_moderator_input(message: types.Message, state: FSMContext):
+    async with state.proxy() as file:
+        input_type = file['input']
+
+    if input_type == 'sharing':
+        text = message.text
+        for i in users_db.get_users():
+            try:
+                await bot.send_message(chat_id=int(i[0]), text=text)
+            except Exception as e:
+                print(e)
+
+        text = 'Рассылка прошла успещно'
+        await bot.send_message(message.chat.id, text=text, reply_markup=types.ReplyKeyboardRemove())
+        await clear_state(state)
+        await send_moderator_menu(message)
+        await FSMAdmin.moderator_opps.set()
+    else:
+        if input_type == 'btc_rate':
+            try:
+                a = int(message.text)
+                statement_db.set_btc(abs(a))
+            except Exception as e:
+                text = 'Некорректный ввод. Введите данные в виде числа'
+                await bot.send_message(message.chat.id, text=text, reply_markup=reply_markup_call_off('Отмена'))
+        elif input_type == 'eth_rate':
+            try:
+                a = int(message.text)
+                statement_db.set_eth(abs(a))
+            except Exception as e:
+                text = 'Некорректный ввод. Введите данные в виде числа'
+                await bot.send_message(message.chat.id, text=text, reply_markup=reply_markup_call_off('Отмена'))
+        elif input_type == 'ltc_rate':
+            try:
+                a = int(message.text)
+                statement_db.set_ltc(abs(a))
+            except Exception as e:
+                text = 'Некорректный ввод. Введите данные в виде числа'
+                await bot.send_message(message.chat.id, text=text, reply_markup=reply_markup_call_off('Отмена'))
+        elif input_type == 'xmr_rate':
+            try:
+                a = int(message.text)
+                statement_db.set_xmr(abs(a))
+            except Exception as e:
+                text = 'Некорректный ввод. Введите данные в виде числа'
+                await bot.send_message(message.chat.id, text=text, reply_markup=reply_markup_call_off('Отмена'))
+        elif input_type == 'btc_adress':
+            statement_db.set_btc_address(message.text)
+        elif input_type == 'eth_adress':
+            statement_db.set_eth_address(message.text)
+        elif input_type == 'ltc_adress':
+            statement_db.set_ltc_address(message.text)
+        elif input_type == 'xmr_adress':
+            statement_db.set_xmr_address(message.text)
+        elif input_type == 'reqs_tinkoff':
+            statement_db.set_tinkoff(message.text)
+        elif input_type == 'reqs_open_bank':
+            statement_db.set_open_bank(message.text)
+        elif input_type == 'reqs_qiwi':
+            statement_db.set_qiwi(message.text)
+        elif input_type == 'about':
+            statement_db.set_about(message.text)
+        elif input_type == 'how':
+            statement_db.set_how(message.text)
+
+        text = 'Успешно изменено'
+        await bot.send_message(message.chat.id, text=text, reply_markup=types.ReplyKeyboardRemove())
+        await clear_state(state)
+        await send_moderator_menu(message)
+        await FSMAdmin.moderator_opps.set()
 
 
 @dispatcher.callback_query_handler()
@@ -144,21 +296,124 @@ async def get_callback_menu(call: types.CallbackQuery):
         await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=inline_markup_sell().add(BACK_BTN))
         await FSMUser.buy.set()
     elif call.data == 'about':
-        pass
+        text = statement_db.get_about()
+        await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=inline_markup_back('Назад'))
     elif call.data == 'calculator':
         text = 'Выберите направление'
         await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=inline_markup_calculator().add(BACK_BTN))
         await FSMUser.calculator.set()
     elif call.data == 'review':
-        pass
+        text = 'Выберите из предложенного ниже 👇'
+        await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=inline_markup_book_opps())
+        await FSMUser.book_opps.set()
     elif call.data == 'how':
-        pass
+        text = statement_db.get_how()
+        await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=inline_markup_back('Назад'))
     elif call.data == 'check_request':
         for i in ADMIN_IDS:
             if call.message.chat.id == i:
                 text = 'Скопируйте и отправьте сюда номер заявки'
                 await bot.send_message(call.message.chat.id, text)
                 await FSMModeratorReply.request_id.set()
+    elif call.data == 'handle_review':
+        await bot.send_message(call.message.chat.id, 'Скопируйте и отправьте ID пользователя для того, чтобы обработать отзыв', reply_markup=reply_markup_call_off('Отмена'))
+        await FSMModeratorReply.review_id.set()
+    elif call.data == 'back':
+        await edit_to_menu(call.message)
+
+
+@dispatcher.callback_query_handler(state=FSMUser.book_opps)
+async def book_opps(call: types.CallbackQuery, state: FSMContext):
+    if call.data == 'check_reviews':
+        reviews = reviews_db.get_reviews_by_status('approved')
+        for i in reviews:
+            try:
+                name = users_db.get_name(int(i[0]))
+                text = f'Отзывы от пользователя {name}' + '\n\n'
+                text += f'<i>{reviews_db.get_review(int(i[0]))}</i>'
+                await bot.send_message(call.message.chat.id, text, parse_mode='HTML')
+            except Exception as e:
+                print(e)
+        await bot.send_message(call.message.chat.id, 'Список всех отзывов', reply_markup=inline_markup_back('Назад'))
+    elif call.data == 'write_review':
+        text = 'Напишите пожалуйста ваш отзыв ниже 👇'
+        await bot.send_message(chat_id=call.message.chat.id, text=text, reply_markup=reply_markup_call_off('Отмена'))
+        await FSMUser.review_input.set()
+    elif call.data == 'back':
+        await clear_state(state)
+        await edit_to_menu(call.message)
+
+
+@dispatcher.message_handler(content_types=['text'], state=FSMUser.review_input)
+async def review_input(message: types.Message, state: FSMContext):
+    text = '— ' + message.text
+    if not reviews_db.review_exists(message.chat.id):
+        reviews_db.add_review(message.chat.id, text, 'check')
+    else:
+        last_review = reviews_db.get_review(message.chat.id) + '\n\n'
+        last_review += text
+        reviews_db.edit_review(message.chat.id, last_review)
+        reviews_db.set_status(message.chat.id, 'check')
+
+    for i in ADMIN_IDS:
+        text = f'Пользователь {get_name(message)} отправил отзыв' + '\n'
+        text += f'ID пользователя <code>{message.chat.id}</code>' + '\n\n'
+        text += f'Cодержание отзыва:' + '\n\n'
+        text += message.text
+
+        try:
+            await bot.send_message(chat_id=int(i), text=text, reply_markup=inline_markup_check_review(), parse_mode='HTML')
+        except Exception as e:
+            print(e)
+
+    await bot.send_message(message.chat.id, '<i>Ваш отзыв получен. Спасибо ✅</i>', reply_markup=types.ReplyKeyboardRemove(), parse_mode='HTML')
+    await clear_state(state)
+    await send_menu(message)
+
+
+@dispatcher.message_handler(content_types=['text'], state=FSMModeratorReply.review_id)
+async def get_request_message(message: types.Message, state: FSMContext):
+    try:
+        if reviews_db.review_exists(int(message.text)):
+
+            await bot.send_message(message.chat.id, 'Принято', reply_markup=types.ReplyKeyboardRemove())
+
+            async with state.proxy() as file:
+                file['user_id'] = message.text
+
+            text = 'Что будем делать с данным отзывом?' + '\n\n'
+            text += reviews_db.get_review(int(message.text))
+            await bot.send_message(message.chat.id, text, reply_markup=inline_markup_review_opps())
+            await FSMModeratorReply.review_opps.set()
+        else:
+            await bot.send_message(message.chat.id, 'Пользователь с таким ID не оставлял отзыв. Введите ID пользователя еще раз', reply_markup=reply_markup_call_off('Отмена'))
+            await FSMModeratorReply.request_id.set()
+    except Exception as e:
+        await bot.send_message(message.chat.id, 'Введите ID пользователя корректно', reply_markup=reply_markup_call_off('Отмена'))
+        await FSMModeratorReply.request_id.set()
+
+
+@dispatcher.callback_query_handler(state=FSMModeratorReply.review_opps)
+async def review_opps(call: types.CallbackQuery, state: FSMContext):
+    if call.data == 'approve':
+        async with state.proxy() as file:
+            user_id = file['user_id']
+        reviews_db.set_status(int(user_id), 'approved')
+
+        await clear_state(state)
+        await send_menu(call.message)
+
+    elif call.data == 'reject':
+        async with state.proxy() as file:
+            user_id = file['user_id']
+
+        reviews_db.delete_review(user_id)
+
+        await clear_state(state)
+        await send_menu(call.message)
+    elif call.data == 'main_menu':
+        await clear_state(state)
+        await send_menu(call.message)
 
 
 @dispatcher.callback_query_handler(state=FSMUser.calculator)
@@ -180,7 +435,6 @@ async def calculate(call: types.CallbackQuery, state: FSMContext):
         text = f'Введите сумму в {currency.upper()}'
         await bot.send_message(call.message.chat.id, text=text, reply_markup=reply_markup_call_off('Отмена'))
         await FSMUser.get_amount.set()
-
 
 
 @dispatcher.message_handler(state=FSMUser.get_amount)
@@ -205,7 +459,7 @@ async def get_rubles(message: types.Message, state: FSMContext):
                     text += f'{round(a / statement_db.get_eth(),6)} ETH'
                 elif currency == 'ltc':
                     text += f'{round(a / statement_db.get_ltc(), 6)} LTC'
-                elif currency == 'xmr':ccd
+                elif currency == 'xmr':
                     text += f'{round(a / statement_db.get_xmr(), 6)} XMR'
 
                 await clear_state(state)

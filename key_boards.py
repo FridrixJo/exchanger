@@ -8,7 +8,7 @@ def inline_markup_menu():
     btn2 = types.InlineKeyboardButton('Продать', callback_data='sell')
     btn3 = types.InlineKeyboardButton('О сервисе', callback_data='about')
     btn4 = types.InlineKeyboardButton('Калькулятор валют', callback_data='calculator')
-    btn5 = types.InlineKeyboardButton('Оставить отзыв', callback_data='review')
+    btn5 = types.InlineKeyboardButton('Отзывы', callback_data='review')
     btn6 = types.InlineKeyboardButton('Как обменять?', callback_data='how')
 
     kb.add(btn1, btn2, btn3, btn4, btn5, btn6)
@@ -19,11 +19,24 @@ def inline_markup_menu():
 def inline_markup_moderator_menu():
     kb = types.InlineKeyboardMarkup(row_width=1)
 
-    btn1 = types.InlineKeyboardButton('Active status', callback_data='active_status')
-    btn2 = types.InlineKeyboardButton('Statistics', callback_data='statistics')
-    btn3 = types.InlineKeyboardButton('Main manu', callback_data='main_menu')
+    btn1 = types.InlineKeyboardButton('Курс BTC', callback_data='btc_rate')
+    btn2 = types.InlineKeyboardButton('Курс ETH', callback_data='eth_rate')
+    btn3 = types.InlineKeyboardButton('Курс LTC', callback_data='ltc_rate')
+    btn4 = types.InlineKeyboardButton('Курс XMR', callback_data='xmr_rate')
+    btn5 = types.InlineKeyboardButton('Адрес BTC', callback_data='btc_address')
+    btn6 = types.InlineKeyboardButton('Адрес ETH', callback_data='eth_address')
+    btn7 = types.InlineKeyboardButton('Адрес LTC', callback_data='ltc_address')
+    btn8 = types.InlineKeyboardButton('Адрес XMR', callback_data='xmr_address')
+    btn9 = types.InlineKeyboardButton('Тинькофф', callback_data='reqs_tinkoff')
+    btn10 = types.InlineKeyboardButton('Банк Открытие', callback_data='reqs_open_bank')
+    btn11 = types.InlineKeyboardButton('Киви карта', callback_data='reqs_qiwi')
+    btn12 = types.InlineKeyboardButton('Раздел "О сервисе"', callback_data='about')
+    btn13 = types.InlineKeyboardButton('Раздел "Как обменять?"', callback_data='how')
+    btn14 = types.InlineKeyboardButton('Рассылка пользователям', callback_data='sharing')
+    btn15 = types.InlineKeyboardButton('Cписок пользователей', callback_data='users_list')
+    btn16 = types.InlineKeyboardButton('Главное меню', callback_data='main_menu')
 
-    kb.add(btn1, btn2, btn3)
+    kb.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9, btn10, btn11, btn12, btn13, btn14, btn15, btn16)
 
     return kb
 
@@ -144,3 +157,35 @@ def inline_markup_request_opps():
 
     return kb
 
+
+def inline_markup_book_opps():
+    kb = types.InlineKeyboardMarkup(row_width=1)
+
+    btn1 = types.InlineKeyboardButton('Посмотреть отзывы 👁‍🗨', callback_data='check_reviews')
+    btn2 = types.InlineKeyboardButton('Написать отзыв ✍', callback_data='write_review')
+    btn3 = types.InlineKeyboardButton('Назад ↩️', callback_data='back')
+
+    kb.add(btn1, btn2, btn3)
+
+    return kb
+
+
+def inline_markup_check_review():
+    kb = types.InlineKeyboardMarkup(row_width=1)
+    btn1 = types.InlineKeyboardButton('ОБРАБОТАТЬ ОТЗЫВ', callback_data='handle_review')
+
+    kb.add(btn1)
+
+    return kb
+
+
+def inline_markup_review_opps():
+    kb = types.InlineKeyboardMarkup(row_width=1)
+
+    btn1 = types.InlineKeyboardButton('Добавить в книгу отзывов ✅', callback_data='approve')
+    btn2 = types.InlineKeyboardButton('Отклонить отзыв ❌', callback_data='reject')
+    btn3 = types.InlineKeyboardButton('Главное меню', callback_data='main_menu')
+
+    kb.add(btn1, btn2), btn3
+
+    return kb

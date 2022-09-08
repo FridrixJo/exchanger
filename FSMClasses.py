@@ -11,11 +11,13 @@ class FSMUser(StatesGroup):
     get_photo = State()
     calculator = State()
     get_amount = State()
+    book_opps = State()
+    review_input = State()
 
 
 class FSMAdmin(StatesGroup):
     moderator_opps = State()
-    active = State()
+    moderator_input = State()
 
 
 class FSMReply(StatesGroup):
@@ -26,3 +28,6 @@ class FSMModeratorReply(StatesGroup):
     request_id = State()
     choice = State()
     blockchain = State()
+
+    review_id = State()
+    review_opps = State()
